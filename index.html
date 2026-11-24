@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRIFT&amp;FLIP — Modern Clothing</title>
+<meta name="description" content="Chrome Hearts, Stüssy & more. Shirts. Shorts. Hats.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="assets/logo/LOGO.png">
+<meta property="og:title" content="DRIFT&FLIP">
+<meta property="og:image" content="assets/logo/LOGO.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preload" as="image" href="assets/logo/LOGO.png">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Grenze+Gotisch:wght@400..900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<noscript><style>.preloader,.cursor{display:none!important}</style></noscript>
+
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --bg:#000;
+  --bg-2:#0a0a0a;
+  --surface:#0e0e0e;
+  --line:rgba(255,255,255,.12);
+  --line-strong:rgba(255,255,255,.28);
+  --ivory:#ECE8DF;
+  --muted:#A3A09A;           /* 8.3:1 on black */
+  --chrome:linear-gradient(180deg,#ffffff 0%,#e4e4e4 22%,#8c8c8c 44%,#3d3d3d 50%,#d9d9d9 58%,#9b9b9b 76%,#f5f5f5 100%);
+  --chrome-x:linear-gradient(100deg,#6f6f6f 0%,#f4f4f4 18%,#8a8a8a 32%,#ffffff 48%,#5c5c5c 62%,#e6e6e6 80%,#7a7a7a 100%);
+
+  --f-goth:'Grenze Gotisch', 'UnifrakturCook', serif;
+  --f-wide:'Archivo', 'Arial Black', system-ui, sans-serif;
+  --f-mono:'Space Mono', ui-monospace, monospace;
+  --f-serif:'Cormorant Garamond', Georgia, serif;
+
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-io:cubic-bezier(.87,0,.13,1);
+  --gutter:clamp(16px, 4vw, 56px);
+  /* hero logo size (the PNG has wide empty margins, so it can overflow the viewport) */
+  --logo:min(128vw, 118dvh, 1200px);
+
+  --z-grain:900; --z-cursor:1000; --z-loader:950; --z-nav:100; --z-progress:110;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);color:var(--ivory);-webkit-text-size-adjust:100%;scrollbar-width:thin;scrollbar-color:#333 #000}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-stopped{overflow:hidden}
+body{font-family:var(--f-wide);font-size:16px;line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased;touch-action:manipulation}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::selection{background:var(--ivory);color:#000}
+:focus-visible{outline:2px solid var(--ivory);outline-offset:4px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:fixed;left:16px;top:-60px;z-index:2000;background:var(--ivory);color:#000;padding:10px 16px;font:700 12px var(--f-mono);text-transform:uppercase}
+.skip:focus{top:16px}
+
+.mono{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.goth{font-family:var(--f-goth);font-weight:700;letter-spacing:-.01em;line-height:.9}
+.wide{font-family:var(--f-wide);font-stretch:125%;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;line-height:.85}
+.chrome{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent}
+.chrome-x{background:var(--chrome-x);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:chromeShift 6s linear infinite}
+@keyframes chromeShift{to{background-position:-220% 0}}
+.outline{color:transparent;-webkit-text-stroke:1px var(--line-strong)}
+
+/* ============================================================
+   GRAIN / CURSOR / PROGRESS
+   ============================================================ */
+.grain{position:fixed;inset:-50%;z-index:var(--z-grain);pointer-events:none;opacity:.07;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1s steps(6) infinite}
+@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-4%,3%)}40%{transform:translate(3%,-5%)}60%{transform:translate(-6%,-2%)}80%{transform:translate(5%,4%)}100%{transform:translate(0,0)}}
+
+.progress{position:fixed;left:0;top:0;height:2px;width:100%;z-index:var(--z-progress);background:var(--chrome-x);transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+
+.cursor{display:none}
+html.has-cursor,html.has-cursor *{cursor:none!important}
+html.has-cursor .cursor{display:block}
+.cursor-dot,.cursor-ring{position:fixed;left:0;top:0;z-index:var(--z-cursor);pointer-events:none;border-radius:50%}
+.cursor-dot{width:6px;height:6px;margin:-3px 0 0 -3px;background:#fff;mix-blend-mode:difference}
+.cursor-ring{width:40px;height:40px;margin:-20px 0 0 -20px;border:1px solid rgba(255,255,255,.55);display:grid;place-items:center;mix-blend-mode:difference;transition:width .45s var(--ease-out),height .45s var(--ease-out),margin .45s var(--ease-out),background-color .3s,border-color .3s}
+.cursor-label{font:700 11px var(--f-mono);letter-spacing:.16em;color:#000;opacity:0;transition:opacity .25s}
+.cursor.is-link .cursor-ring{width:64px;height:64px;margin:-32px 0 0 -32px;border-color:#fff}
+.cursor.is-view .cursor-ring{width:96px;height:96px;margin:-48px 0 0 -48px;background:#fff;border-color:#fff;mix-blend-mode:normal}
+.cursor.is-view .cursor-label{opacity:1}
+.cursor.is-view .cursor-dot{opacity:0}
+.cursor.is-down .cursor-ring{transform:scale(.85)}
+
+/* ============================================================
+   PRELOADER
+   ============================================================ */
+.preloader{position:fixed;inset:0;clip-path:inset(0% 0% 0% 0%);z-index:var(--z-loader);background:#000;display:grid;place-items:center;height:100dvh}
+.pl-logo{position:absolute;left:50%;top:50%;width:var(--logo);height:var(--logo);margin:calc(var(--logo) / -2) 0 0 calc(var(--logo) / -2);clip-path:inset(100% 0% 0% 0%)}
+.pl-logo img{width:100%;height:100%}
+.pl-count{position:absolute;left:var(--gutter);bottom:var(--gutter);font-family:var(--f-goth);font-weight:700;font-size:clamp(64px,12vw,180px);line-height:.8;font-variant-numeric:tabular-nums}
+.pl-tag{position:absolute;right:var(--gutter);bottom:calc(var(--gutter) + 6px);color:var(--muted)}
+.pl-bar{position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--chrome-x);transform:scaleX(0);transform-origin:0 50%}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+.nav{position:fixed;inset:0 0 auto 0;z-index:var(--z-nav);display:flex;align-items:center;justify-content:space-between;padding:18px var(--gutter);mix-blend-mode:difference;transition:transform .6s var(--ease-out)}
+.nav.is-hidden{transform:translateY(-110%)}
+.nav-mark{font-family:var(--f-goth);font-weight:800;font-size:34px;line-height:1;color:#fff}
+.nav-links{display:flex;gap:clamp(14px,3vw,40px);list-style:none}
+.nav-links a{display:inline-block;padding:10px 0;color:#fff;position:relative}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:4px;height:1px;width:100%;background:#fff;transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease-out)}
+.nav-links a:hover::after{transform:scaleX(1);transform-origin:left}
+.nav-est{color:#fff}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{position:relative;height:100dvh;min-height:520px;display:grid;place-items:center;overflow:hidden;background:#000}
+#stars{position:absolute;inset:0;width:100%;height:100%}
+.hero-glow{position:absolute;left:0;top:0;width:70vmax;height:70vmax;margin:-35vmax 0 0 -35vmax;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.09),rgba(255,255,255,.03) 45%,transparent 70%);pointer-events:none;opacity:0}
+.hero-logo-wrap{position:absolute;left:50%;top:50%;width:var(--logo);height:var(--logo);margin:calc(var(--logo) / -2) 0 0 calc(var(--logo) / -2);perspective:1400px;z-index:2;pointer-events:none}
+.hero-logo{position:relative;width:100%;height:100%;pointer-events:auto;transform-style:preserve-3d;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hero-logo img{position:absolute;inset:0;width:100%;height:100%;user-select:none;-webkit-user-drag:none}
+.logo-img{mix-blend-mode:screen}
+.logo-glow{filter:blur(48px) brightness(1.4);opacity:0}
+.logo-shine{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.95) 50%,transparent 62%);background-size:300% 100%;background-position:150% 0;
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;transform:translateZ(20px)}
+.is-alpha .logo-glow{opacity:.35}
+.is-alpha .logo-shine{opacity:1}
+.is-alpha .logo-img{mix-blend-mode:normal}
+
+.hero-meta{position:absolute;left:0;right:0;bottom:0;padding:0 var(--gutter) var(--gutter);display:grid;grid-template-columns:1fr auto 1fr;align-items:end;z-index:3;color:var(--muted)}
+.hero-meta > :last-child{text-align:right}
+.scroll-cue{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--ivory)}
+.scroll-cue i{display:block;width:1px;height:56px;background:linear-gradient(var(--ivory),transparent);transform-origin:top;animation:cue 2.2s var(--ease-io) infinite}
+@keyframes cue{0%{transform:scaleY(0)}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.hero-side{position:absolute;top:50%;z-index:3;writing-mode:vertical-rl;color:var(--muted)}
+.hero-side.l{left:var(--gutter);transform:translateY(-50%) rotate(180deg)}
+.hero-side.r{right:var(--gutter);transform:translateY(-50%)}
+
+/* ============================================================
+   MARQUEE
+   ============================================================ */
+.marquee{position:relative;padding:clamp(28px,5vw,64px) 0;border-block:1px solid var(--line);overflow:hidden;background:#000}
+.mq-row{display:flex;width:max-content;white-space:nowrap;will-change:transform}
+.mq-row + .mq-row{margin-top:clamp(4px,1vw,12px)}
+.mq-inner{display:flex;align-items:center;flex-shrink:0}
+.mq-item{display:flex;align-items:center;gap:clamp(18px,3vw,44px);padding-right:clamp(18px,3vw,44px);font-size:clamp(44px,9vw,140px)}
+.mq-item svg{width:.42em;height:.42em;flex-shrink:0}
+.mq-row.b .outline{-webkit-text-stroke:1px rgba(255,255,255,.55)}
+.mq-row.b .mq-item{font-family:var(--f-goth);font-weight:700;text-transform:none;letter-spacing:0;font-stretch:100%}
+
+/* ============================================================
+   SECTION HEAD
+   ============================================================ */
+section{position:relative}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:0 var(--gutter);margin-bottom:clamp(28px,4vw,56px)}
+.sec-title{font-size:clamp(72px,14vw,220px);padding-bottom:.08em}
+.sec-title .char{padding:0 .02em}
+.sec-count{color:var(--muted);padding-bottom:1.2em;white-space:nowrap}
+
+/* ============================================================
+   SHOP
+   ============================================================ */
+.price{font-family:var(--f-mono);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.shop{padding:clamp(36px,5vw,72px) 0 clamp(60px,8vw,120px)}
+.shop .sec-title{font-size:clamp(64px,10vw,170px)}
+.shop .sec-head{margin-bottom:clamp(20px,2.5vw,36px)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;padding:0 var(--gutter);margin-bottom:clamp(24px,3vw,40px)}
+.filter{position:relative;min-height:44px;padding:0 20px;border:1px solid var(--line-strong);border-radius:999px;font:700 12px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;overflow:hidden;isolation:isolate;transition:color .4s var(--ease-out),border-color .4s}
+.filter::before{content:"";position:absolute;inset:0;background:var(--ivory);border-radius:inherit;transform:translateY(101%);transition:transform .5s var(--ease-out);z-index:-1}
+.filter:hover{border-color:var(--ivory)}
+.filter[aria-pressed="true"]{color:#000;border-color:var(--ivory)}
+.filter[aria-pressed="true"]::before{transform:translateY(0)}
+.filter sup{font-size:9px;margin-left:4px;opacity:.7}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(12px,2vw,28px) clamp(10px,1.6vw,24px);padding:0 var(--gutter)}
+@media (min-width:768px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:1200px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{display:block;position:relative;perspective:900px}
+.card.is-hidden{display:none}
+.card-media{position:relative;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line);background:radial-gradient(circle at 50% 42%,#191919,#060606 72%);transform-style:preserve-3d;transition:border-color .4s}
+.card-media::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;
+  background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.16),transparent 45%)}
+.card:hover .card-media{border-color:var(--line-strong)}
+.card:hover .card-media::after{opacity:1}
+.card-media > img,.card-media > .ph{width:100%;height:100%;object-fit:cover;transition:transform 1s var(--ease-out)}
+.card-media > .ph{width:112%;height:112%;margin:-6%}
+.card:hover .card-media > img,.card:hover .card-media > .ph{transform:scale(1.07)}
+.card-tag{position:absolute;left:10px;top:10px;padding:4px 8px;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--line);z-index:2}
+.card-info{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding-top:12px}
+.card-brand{grid-column:1 / -1;color:var(--muted);font-size:12px}
+.card-name{font-family:var(--f-wide);font-weight:700;font-stretch:105%;font-size:clamp(14px,1.15vw,16px);line-height:1.25;text-transform:uppercase}
+.sold-mark{position:absolute;inset:0;display:grid;place-items:center;z-index:3;background:rgba(0,0,0,.55)}
+.sold-mark span{font-family:var(--f-goth);font-weight:800;font-size:clamp(40px,6vw,84px);transform:rotate(-12deg)}
+.is-sold .card-media > img,.is-sold .card-media > .ph,.is-sold .panel-media > *{filter:grayscale(1) brightness(.6)}
+.is-sold .price{text-decoration:line-through;color:var(--muted)}
+
+/* product placeholder art */
+.ph .g{fill:url(#g-fabric);stroke:url(#g-chrome);stroke-width:1.4}
+.ph .s{fill:none;stroke:url(#g-chrome);stroke-width:1;opacity:.75}
+.ph .mk{fill:url(#g-chrome-b)}
+.ph .grid-l{stroke:rgba(255,255,255,.04);stroke-width:.5}
+
+/* ============================================================
+   MANIFESTO
+   ============================================================ */
+.manifesto{padding:clamp(100px,16vw,240px) var(--gutter);border-top:1px solid var(--line);text-align:center;overflow:hidden}
+.manifesto p{font-size:clamp(40px,8.4vw,150px);max-width:14ch;margin:0 auto}
+.manifesto em{font-family:var(--f-goth);font-style:normal;text-transform:none;font-stretch:100%;font-weight:700;letter-spacing:0}
+.manifesto .star{width:28px;height:28px;margin:0 auto 32px}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer{border-top:1px solid var(--line);padding-top:clamp(60px,8vw,120px);overflow:hidden;position:relative}
+.foot-top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:32px;padding:0 var(--gutter)}
+.dm{display:inline-flex;align-items:center;gap:.25em;font-size:clamp(48px,9vw,150px)}
+.dm svg{width:.6em;height:.6em;transition:transform .7s var(--ease-out)}
+.dm:hover svg{transform:rotate(-45deg)}
+.foot-links{display:flex;gap:28px;list-style:none}
+.foot-links a,.foot-links button{display:inline-block;padding:12px 0;color:var(--muted);transition:color .3s}
+.foot-links button{text-transform:inherit;letter-spacing:inherit}
+.foot-links a:hover,.foot-links button:hover{color:var(--ivory)}
+.mega{--x:50%;--y:50%;font-family:var(--f-goth);font-weight:800;font-size:22.5vw;line-height:.82;text-align:center;white-space:nowrap;margin-top:clamp(40px,6vw,90px);padding-bottom:.2em;margin-bottom:-.08em;user-select:none;
+  background:radial-gradient(circle at var(--x) var(--y),#fff 0%,#cfcfcf 8%,#555 22%,#1a1a1a 42%,#0d0d0d 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.foot-bottom{display:flex;justify-content:space-between;gap:16px;padding:18px var(--gutter);border-top:1px solid var(--line);color:var(--muted)}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+html.modal-open{overflow:hidden}
+.modal{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;border:0;padding:0;background:transparent;color:var(--ivory)}
+.modal::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.modal-inner{position:absolute;inset:clamp(0px,3vw,40px);display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;background:#050505;border:1px solid var(--line-strong);overflow:hidden}
+@media (min-width:900px){.modal-inner{grid-template-columns:1.15fr 1fr;grid-template-rows:1fr}}
+.m-media{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 42%,#1d1d1d,#050505 72%);min-height:0}
+.m-media > *{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.m-media .ph{inset:-6%;width:112%;height:112%}
+.m-info{display:flex;flex-direction:column;justify-content:flex-end;gap:clamp(12px,2vw,24px);padding:clamp(20px,4vw,56px);border-top:1px solid var(--line)}
+@media (min-width:900px){.m-info{border-top:0;border-left:1px solid var(--line)}}
+.m-brand{color:var(--muted)}
+.m-name{font-size:clamp(34px,5vw,84px);line-height:.9}
+.m-price{font-family:var(--f-goth);font-weight:700;font-size:clamp(36px,4.6vw,72px);line-height:1}
+.m-specs{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.m-specs div{padding:14px 0 0}
+.m-specs dt{color:var(--muted)}
+.m-specs dd{font-family:var(--f-wide);font-weight:800;font-stretch:110%;font-size:clamp(16px,1.6vw,22px);text-transform:uppercase;margin-top:4px}
+.m-nav{display:flex;gap:8px;margin-top:8px}
+.m-btn{display:grid;place-items:center;width:52px;height:52px;border:1px solid var(--line-strong);border-radius:50%;transition:background-color .3s,color .3s,border-color .3s}
+.m-btn:hover{background:var(--ivory);color:#000;border-color:var(--ivory)}
+.m-btn svg{width:20px;height:20px}
+.m-close{position:absolute;right:clamp(12px,2vw,24px);top:clamp(12px,2vw,24px);z-index:5;background:rgba(0,0,0,.5);backdrop-filter:blur(6px)}
+.m-close svg{transition:transform .5s var(--ease-out)}
+.m-close:hover svg{transform:rotate(90deg)}
+.m-sold{display:inline-block;margin-left:12px;padding:4px 10px;border:1px solid var(--ivory);vertical-align:middle;font-size:12px}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:767px){
+  .nav-est{display:none}
+  .hero-side{display:none}
+  .hero-meta{grid-template-columns:1fr 1fr}
+  .hero-meta .scroll-cue{display:none}
+  .foot-bottom{flex-direction:column}
+  .m-specs dd{font-size:15px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .grain{animation:none}
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#shop">Skip to shop</a>
+
+<!-- shared SVG defs -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-chrome" x1="0" y1="0" x2=".35" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".22" stop-color="#9a9a9a"/><stop offset=".42" stop-color="#2e2e2e"/>
+      <stop offset=".55" stop-color="#e8e8e8"/><stop offset=".75" stop-color="#6a6a6a"/><stop offset="1" stop-color="#d4d4d4"/>
+    </linearGradient>
+    <linearGradient id="g-chrome-b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#a8a8a8"/><stop offset=".5" stop-color="#4a4a4a"/>
+      <stop offset=".65" stop-color="#f2f2f2"/><stop offset="1" stop-color="#8a8a8a"/>
+    </linearGradient>
+    <linearGradient id="g-fabric" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1c1c"/><stop offset="1" stop-color="#090909"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-star" viewBox="-10 -10 20 20"><path d="M0-10C.9-2.4 2.4-.9 10 0 2.4.9.9 2.4 0 10-.9 2.4-2.4.9-10 0-2.4-.9-.9-2.4 0-10Z"/></symbol>
+  <symbol id="i-cross" viewBox="-20 -24 40 48"><path d="M-3.4-22 0-24 3.4-22 3-8 4-7 16-7.6 18-4 16-.4 4-1 3 0 3.6 18 0 24-3.6 18-3 0-4-1-16-.4-18-4-16-7.6-4-7-3-8Z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-arrow-ur" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+</svg>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="progress" aria-hidden="true"></div>
+<div class="cursor" aria-hidden="true"><div class="cursor-ring"><span class="cursor-label">VIEW</span></div><div class="cursor-dot"></div></div>
+
+<!-- PRELOADER -->
+<div class="preloader" aria-hidden="true">
+  <div class="pl-logo"><img src="assets/logo/LOGO.png" alt=""></div>
+  <div class="pl-count chrome">000</div>
+  <div class="pl-tag mono">Modern Clothing</div>
+  <div class="pl-bar"></div>
+</div>
+
+<!-- NAV -->
+<header class="nav">
+  <a class="nav-mark" href="#top" aria-label="Drift and Flip — top" data-cursor="link">D&amp;F</a>
+  <nav aria-label="Primary">
+    <ul class="nav-links mono">
+      <li><a href="#shop" data-scramble data-cursor="link">Shop</a></li>
+      <li><a href="#contact" data-scramble data-cursor="link">Contact</a></li>
+    </ul>
+  </nav>
+  <span class="nav-est mono">Est. 2025</span>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero" id="top" aria-label="Drift and Flip">
+    <canvas id="stars" aria-hidden="true"></canvas>
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-logo-wrap">
+      <h1 class="sr-only">Drift &amp; Flip — Modern Clothing</h1>
+      <div class="hero-logo" role="img" aria-label="Drift and Flip logo">
+        <img class="logo-glow" src="assets/logo/LOGO.png" alt="" aria-hidden="true">
+        <img class="logo-img" src="assets/logo/LOGO.png" alt="" aria-hidden="true">
+        <span class="logo-shine" aria-hidden="true"></span>
+      </div>
+    </div>
+    <span class="hero-side l mono">Chrome Hearts — Stüssy</span>
+    <span class="hero-side r mono">Shirts — Shorts — Hats</span>
+    <div class="hero-meta mono">
+      <span class="hm" id="hero-count">Pieces</span>
+      <span class="scroll-cue hm"><span class="sr-only">Scroll</span><i></i></span>
+      <span class="hm">Browse only</span>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <section class="marquee" aria-label="Brands">
+    <div class="mq-row a wide" data-dir="-1"></div>
+    <div class="mq-row b" data-dir="1"></div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="shop" id="shop" aria-labelledby="shop-title">
+    <div class="sec-head">
+      <h2 id="shop-title" class="sec-title goth chrome" data-split>The Rack</h2>
+      <span class="sec-count mono" id="shop-count" aria-live="polite"></span>
+    </div>
+    <div class="filters" role="group" aria-label="Filter by category" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- MANIFESTO -->
+  <section class="manifesto" aria-label="Manifesto">
+    <svg class="star chrome-svg" aria-hidden="true"><use href="#i-star" fill="url(#g-chrome-b)"/></svg>
+    <p class="wide" data-words>No restocks. No repeats. Once it’s <em class="chrome">gone</em>, it’s gone.</p>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer" id="contact">
+  <div class="foot-top">
+    <a class="dm wide" id="dm-link" href="#" target="_blank" rel="noopener" data-cursor="link" data-magnetic>
+      <span class="chrome">DM us</span><svg aria-hidden="true"><use href="#i-arrow-ur"/></svg>
+    </a>
+    <ul class="foot-links mono">
+      <li><a id="ig-link" href="#" target="_blank" rel="noopener" data-scramble data-cursor="link">Instagram</a></li>
+      <li><button type="button" id="to-top" data-scramble data-cursor="link">Back to top</button></li>
+    </ul>
+  </div>
+  <div class="mega" aria-hidden="true">Drift&amp;Flip</div>
+  <div class="foot-bottom mono">
+    <span>© <span id="yr">2025</span> Drift&amp;Flip</span>
+    <span>Modern Clothing — Est. 2025</span>
+  </div>
+</footer>
+
+<!-- QUICK VIEW -->
+<dialog class="modal" id="modal" aria-labelledby="m-name">
+  <div class="modal-inner">
+    <button class="m-btn m-close" type="button" aria-label="Close" data-cursor="link"><svg><use href="#i-close"/></svg></button>
+    <div class="m-media" id="m-media"></div>
+    <div class="m-info">
+      <span class="m-brand mono" id="m-brand"></span>
+      <h2 class="m-name wide" id="m-name"></h2>
+      <div class="m-price chrome" id="m-price"></div>
+      <dl class="m-specs mono">
+        <div><dt>Size</dt><dd id="m-size"></dd></div>
+        <div><dt>Cond.</dt><dd id="m-cond"></dd></div>
+        <div><dt>Type</dt><dd id="m-cat"></dd></div>
+      </dl>
+      <div class="m-nav">
+        <button class="m-btn" type="button" id="m-prev" aria-label="Previous item" data-cursor="link"><svg style="transform:scaleX(-1)"><use href="#i-arrow"/></svg></button>
+        <button class="m-btn" type="button" id="m-next" aria-label="Next item" data-cursor="link"><svg><use href="#i-arrow"/></svg></button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrambleTextPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js"></script>
+
+<script>
+/* ==========================================================================
+   ✦ EDIT HERE ✦
+   - currency / instagram: your settings
+   - PRODUCTS: one line per item.
+       img:      path to a photo, e.g. "assets/products/shirts/cemetery-tee.jpg"
+                 (leave "" to show the chrome placeholder)
+       cat:      "shirts" | "shorts" | "hats"
+       sold:     true  → greyed out with SOLD stamp
+   ========================================================================== */
+const CONFIG = {
+  currency: '₱',
+  instagram: 'https://instagram.com/',
+};
+
+const PRODUCTS = [
+  { id:'ch-cemetery-tee',   brand:'Chrome Hearts', name:'Cemetery Cross Tee',    cat:'shirts', price:18500, size:'L',   cond:'9/10', img:'' },
+  { id:'stussy-stock-tee',  brand:'Stüssy',        name:'Stock Logo Tee',        cat:'shirts', price:2800,  size:'XL',  cond:'DS',   img:'' },
+  { id:'ch-horseshoe-tee',  brand:'Chrome Hearts', name:'Horseshoe Pocket Tee',  cat:'shirts', price:16000, size:'M',   cond:'9/10', img:'' },
+  { id:'stussy-8ball-tee',  brand:'Stüssy',        name:'8 Ball Tee',            cat:'shirts', price:3200,  size:'L',   cond:'DS',   img:'' },
+  { id:'ch-malibu-ls',      brand:'Chrome Hearts', name:'Malibu Longsleeve',     cat:'shirts', price:22000, size:'M',   cond:'8/10', img:'', sold:true },
+  { id:'ch-cross-shorts',   brand:'Chrome Hearts', name:'Cross Patch Sweatshort',cat:'shorts', price:29000, size:'L',   cond:'9/10', img:'' },
+  { id:'stussy-water-short',brand:'Stüssy',        name:'Big Basic Water Short', cat:'shorts', price:4200,  size:'M',   cond:'DS',   img:'' },
+  { id:'stussy-mesh-short', brand:'Stüssy',        name:'Stock Mesh Short',      cat:'shorts', price:3800,  size:'L',   cond:'9/10', img:'' },
+  { id:'ch-dagger-shorts',  brand:'Chrome Hearts', name:'Dagger Sweatshort',     cat:'shorts', price:26500, size:'M',   cond:'8/10', img:'' },
+  { id:'ch-trucker',        brand:'Chrome Hearts', name:'Cross Patch Trucker',   cat:'hats',   price:19500, size:'OS',  cond:'DS',   img:'' },
+  { id:'stussy-stock-cap',  brand:'Stüssy',        name:'Big Stock Cap',         cat:'hats',   price:2600,  size:'OS',  cond:'DS',   img:'' },
+  { id:'stussy-bucket',     brand:'Stüssy',        name:'Stock Bucket Hat',      cat:'hats',   price:3000,  size:'S/M', cond:'9/10', img:'' },
+];
+/* ========================================================================== */
+
+(() => {
+  'use strict';
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const RM   = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const CATS = [
+    { key:'shirts', label:'Shirts' },
+    { key:'shorts', label:'Shorts' },
+    { key:'hats',   label:'Hats' },
+  ];
+  const money = n => CONFIG.currency + Number(n).toLocaleString('en-US');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pad = (n, l = 2) => String(n).padStart(l, '0');
+
+  /* ---------- placeholder garment art ---------- */
+  const GRID = Array.from({length: 9}, (_, i) => `<line class="grid-l" x1="${i*25}" y1="0" x2="${i*25}" y2="220"/><line class="grid-l" x1="0" y1="${i*27.5}" x2="200" y2="${i*27.5}"/>`).join('');
+  const SHAPES = {
+    shirts: { body:`<path class="g" d="M72 34Q100 52 128 34L164 50 184 90 158 102 150 88V194H50V88L42 102 16 90 36 50Z"/><path class="s" d="M72 34Q100 52 128 34M50 88 42 102M150 88l8 14"/><path class="s" d="M88 36q12 8 24 0" opacity=".5"/>`, mark:[100, 94, 30] },
+    shorts: { body:`<path class="g" d="M46 44H154L168 170 114 178 100 100 86 178 32 170Z"/><path class="s" d="M46 58H154M100 58V100M58 58q4 22-6 34M142 58q-4 22 6 34"/>`, mark:[134, 140, 22] },
+    hats:   { body:`<path class="g" d="M40 132C40 70 74 52 106 52S170 74 170 132Z"/><path class="g" d="M36 130C92 120 150 122 194 144 186 160 160 160 132 152 100 144 64 142 36 146Z"/><path class="s" d="M106 52Q96 90 98 130M106 52q16 36 20 76M74 66q-10 30-10 64"/><circle cx="106" cy="52" r="3" fill="url(#g-chrome-b)"/>`, mark:[104, 100, 26] },
+  };
+  function art(p) {
+    if (p.img) return `<img src="${esc(p.img)}" alt="${esc(p.brand + ' ' + p.name)}" loading="lazy" decoding="async">`;
+    const s = SHAPES[p.cat] || SHAPES.shirts;
+    const [x, y, w] = s.mark;
+    const isCH = /chrome/i.test(p.brand);
+    const mark = `<use class="mk" href="${isCH ? '#i-cross' : '#i-star'}" x="${x - w/2}" y="${y - w*.6}" width="${w}" height="${w*1.2}"/>`;
+    return `<svg class="ph" viewBox="0 0 200 220" role="img" aria-label="${esc(p.brand + ' ' + p.name)}">${GRID}${s.body}${mark}</svg>`;
+  }
+
+  /* ---------- RENDER ---------- */
+  // marquee
+  const starSvg = `<svg aria-hidden="true"><use href="#i-star" fill="url(#g-chrome-b)"/></svg>`;
+  const mqA = ['Chrome Hearts', 'Stüssy', 'Archive', 'One of One'];
+  const mqB = ['Shirts', 'Shorts', 'Hats', 'Modern Clothing'];
+  const mqHTML = (words, cls) => `<div class="mq-inner">${words.map(w => `<span class="mq-item ${cls}">${w}${starSvg}</span>`).join('')}</div>`;
+  $('.mq-row.a').innerHTML = mqHTML(mqA, '').repeat(2);
+  $('.mq-row.b').innerHTML = mqHTML(mqB, 'outline').repeat(2);
+
+  // filters
+  const filterDefs = [{ key:'all', label:'All' }, ...CATS];
+  $('#filters').innerHTML = filterDefs.map(f => {
+    const n = f.key === 'all' ? PRODUCTS.length : PRODUCTS.filter(p => p.cat === f.key).length;
+    return `<button class="filter" type="button" data-filter="${f.key}" aria-pressed="${f.key === 'all'}" data-cursor="link">${f.label}<sup>${pad(n)}</sup></button>`;
+  }).join('');
+
+  // grid
+  $('#grid').innerHTML = PRODUCTS.map(p => `
+    <a class="card${p.sold ? ' is-sold' : ''}" href="#item/${p.id}" data-cat="${p.cat}" data-flip-id="${p.id}" data-cursor="view">
+      <div class="card-media">
+        ${art(p)}
+        <span class="card-tag mono">${esc(p.size)}</span>
+        ${p.sold ? '<div class="sold-mark"><span class="chrome">Sold</span></div>' : ''}
+      </div>
+      <div class="card-info">
+        <span class="card-brand mono">${esc(p.brand)}</span>
+        <h3 class="card-name">${esc(p.name)}</h3>
+        <span class="price">${money(p.price)}</span>
+      </div>
+    </a>`).join('');
+  const setShopCount = n => $('#shop-count').textContent = `(${pad(n)}) pieces`;
+  setShopCount(PRODUCTS.length);
+  $('#hero-count').textContent = `(${pad(PRODUCTS.filter(p => !p.sold).length)}) pieces in stock`;
+
+  // footer
+  $('#ig-link').href = CONFIG.instagram;
+  $('#dm-link').href = CONFIG.instagram;
+  $('#yr').textContent = new Date().getFullYear();
+
+  /* ---------- logo → alpha (for glow + shine mask) ---------- */
+  async function alphaLogo(src) {
+    try {
+      const img = new Image(); img.src = src; await img.decode();
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+      for (let i = 0; i < p.length; i += 4) {
+        const m = Math.max(p[i], p[i+1], p[i+2]);
+        const a = Math.max(0, Math.min(255, (m - 6) * 1.03));
+        if (a === 0) { p[i+3] = 0; continue; }
+        const k = 255 / m;
+        p[i] *= k; p[i+1] *= k; p[i+2] *= k; p[i+3] = a;
+      }
+      x.putImageData(d, 0, 0);
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      return blob ? URL.createObjectURL(blob) : null;
+    } catch (e) { return null; } // file:// or CORS → keep original
+  }
+  const alphaReady = alphaLogo('assets/logo/LOGO.png').then(url => {
+    if (!url) return;
+    const hl = $('.hero-logo');
+    $('.logo-img', hl).src = url;
+    $('.logo-glow', hl).src = url;
+    const sh = $('.logo-shine', hl);
+    sh.style.webkitMaskImage = sh.style.maskImage = `url(${url})`;
+    hl.classList.add('is-alpha');
+  });
+
+  let route = () => {};
+
+  /* ---------- no GSAP? show static site ---------- */
+  if (typeof gsap === 'undefined') {
+    $('.preloader')?.remove();
+    initModal(null);
+    return;
+  }
+
+  gsap.registerPlugin(ScrollTrigger, Flip, SplitText, ScrambleTextPlugin);
+  history.scrollRestoration = 'manual';
+
+  /* ---------- smooth scroll ---------- */
+  let lenis = null;
+  if (!RM && typeof Lenis !== 'undefined') {
+    lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 1, smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(t => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+    lenis.stop();
+  }
+  const scrollToEl = (target, opts = {}) => {
+    const el = typeof target === 'string' ? $(target) : target;
+    if (!el) return;
+    if (lenis) lenis.scrollTo(el, { offset: opts.offset ?? 0, duration: 1.6, easing: t => 1 - Math.pow(1 - t, 4) });
+    else el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth' });
+  };
+
+  /* ---------- in-page anchors ---------- */
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (href.startsWith('#item/')) return; // handled by router
+    if (href.length > 1 && $(href)) { e.preventDefault(); scrollToEl(href); }
+  });
+  $('#to-top').addEventListener('click', () => scrollToEl('#top'));
+
+  /* ---------- custom cursor ---------- */
+  const cursor = $('.cursor');
+  if (FINE && !RM) {
+    document.documentElement.classList.add('has-cursor');
+    const dot = $('.cursor-dot'), ring = $('.cursor-ring');
+    gsap.set([dot, ring], { x: innerWidth / 2, y: innerHeight / 2 });
+    const dx = gsap.quickTo(dot, 'x', { duration: .08, ease: 'power3' }), dy = gsap.quickTo(dot, 'y', { duration: .08, ease: 'power3' });
+    const rx = gsap.quickTo(ring, 'x', { duration: .45, ease: 'power3' }), ry = gsap.quickTo(ring, 'y', { duration: .45, ease: 'power3' });
+    addEventListener('pointermove', e => { dx(e.clientX); dy(e.clientY); rx(e.clientX); ry(e.clientY); }, { passive: true });
+    addEventListener('pointerdown', () => cursor.classList.add('is-down'));
+    addEventListener('pointerup', () => cursor.classList.remove('is-down'));
+    document.addEventListener('pointerover', e => {
+      const t = e.target.closest('[data-cursor], a, button');
+      cursor.classList.toggle('is-view', !!t && t.dataset.cursor === 'view');
+      cursor.classList.toggle('is-link', !!t && t.dataset.cursor !== 'view');
+    });
+    document.addEventListener('mouseleave', () => gsap.to([dot, ring], { opacity: 0, duration: .2 }));
+    document.addEventListener('mouseenter', () => gsap.to([dot, ring], { opacity: 1, duration: .2 }));
+  }
+
+  /* ---------- scramble hover ---------- */
+  if (!RM) $$('[data-scramble]').forEach(el => {
+    const text = el.textContent;
+    el.addEventListener('pointerenter', () => gsap.to(el, { duration: .6, scrambleText: { text, chars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ&✦', speed: .8 }, overwrite: true }));
+  });
+
+  /* ---------- magnetic ---------- */
+  if (FINE && !RM) $$('[data-magnetic], .m-btn, .filter').forEach(el => {
+    const xT = gsap.quickTo(el, 'x', { duration: .6, ease: 'elastic.out(1,.4)' });
+    const yT = gsap.quickTo(el, 'y', { duration: .6, ease: 'elastic.out(1,.4)' });
+    el.addEventListener('pointermove', e => {
+      const r = el.getBoundingClientRect();
+      xT((e.clientX - r.left - r.width / 2) * .3); yT((e.clientY - r.top - r.height / 2) * .3);
+    });
+    el.addEventListener('pointerleave', () => { xT(0); yT(0); });
+  });
+
+  /* ---------- hero stars canvas ---------- */
+  const stars = (() => {
+    const c = $('#stars'), ctx = c.getContext('2d');
+    let w = 0, h = 0, list = [], raf = 0, visible = true, mx = 0, my = 0, tmx = 0, tmy = 0;
+    const N = innerWidth < 768 ? 55 : 130;
+    const make = (y) => {
+      const big = Math.random() < .13;
+      return { x: Math.random() * w, y: y ?? Math.random() * h, r: big ? 3 + Math.random() * 7 : .5 + Math.random() * 1.3,
+        sp: .06 + Math.random() * .32, ph: Math.random() * 6.28, tw: .4 + Math.random() * 1.6, z: .2 + Math.random() * .8, big };
+    };
+    const resize = () => {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      w = c.clientWidth; h = c.clientHeight;
+      c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      list = Array.from({ length: N }, () => make());
+    };
+    const sparkle = (x, y, r) => {
+      ctx.beginPath(); ctx.moveTo(x, y - r);
+      ctx.quadraticCurveTo(x + r * .12, y - r * .12, x + r, y);
+      ctx.quadraticCurveTo(x + r * .12, y + r * .12, x, y + r);
+      ctx.quadraticCurveTo(x - r * .12, y + r * .12, x - r, y);
+      ctx.quadraticCurveTo(x - r * .12, y - r * .12, x, y - r);
+      ctx.fill();
+    };
+    const draw = (t) => {
+      ctx.clearRect(0, 0, w, h);
+      mx += (tmx - mx) * .05; my += (tmy - my) * .05;
+      for (const s of list) {
+        if (!RM) { s.y -= s.sp * s.z; if (s.y < -12) Object.assign(s, make(h + 12)); }
+        const a = .2 + .8 * (.5 + .5 * Math.sin(t * .001 * s.tw + s.ph));
+        const x = s.x + mx * s.z * 30, y = s.y + my * s.z * 30;
+        ctx.fillStyle = `rgba(236,232,223,${(a * (s.big ? .9 : .6)).toFixed(3)})`;
+        if (s.big) { ctx.shadowColor = 'rgba(255,255,255,.8)'; ctx.shadowBlur = 10 * a; sparkle(x, y, s.r * (.7 + .3 * a)); ctx.shadowBlur = 0; }
+        else { ctx.beginPath(); ctx.arc(x, y, s.r, 0, 6.283); ctx.fill(); }
+      }
+    };
+    const loop = (t) => { draw(t); raf = visible && !RM ? requestAnimationFrame(loop) : 0; };
+    resize();
+    addEventListener('resize', () => { resize(); if (RM) draw(0); });
+    addEventListener('pointermove', e => { tmx = e.clientX / innerWidth - .5; tmy = e.clientY / innerHeight - .5; }, { passive: true });
+    new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible && !raf && !RM) raf = requestAnimationFrame(loop); }).observe(c);
+    return { start() { RM ? draw(0) : (raf = requestAnimationFrame(loop)); } };
+  })();
+
+  /* ---------- hero interactions ---------- */
+  const heroLogo = $('.hero-logo'), glow = $('.hero-glow');
+  if (FINE && !RM) {
+    const rY = gsap.quickTo(heroLogo, 'rotationY', { duration: 1.2, ease: 'power3' });
+    const rX = gsap.quickTo(heroLogo, 'rotationX', { duration: 1.2, ease: 'power3' });
+    const gx = gsap.quickTo(glow, 'x', { duration: 1, ease: 'power3' });
+    const gy = gsap.quickTo(glow, 'y', { duration: 1, ease: 'power3' });
+    $('.hero').addEventListener('pointermove', e => {
+      const px = e.clientX / innerWidth - .5, py = e.clientY / innerHeight - .5;
+      rY(px * 18); rX(-py * 14); gx(e.clientX); gy(e.clientY);
+    });
+    $('.hero').addEventListener('pointerleave', () => { rY(0); rX(0); });
+  }
+  gsap.set(glow, { x: innerWidth / 2, y: innerHeight / 2 });
+
+  // FLIP easter egg — click the logo
+  let flipping = false;
+  heroLogo.addEventListener('click', () => {
+    if (flipping || RM) return; flipping = true;
+    gsap.timeline({ onComplete: () => { flipping = false; } })
+      .to(heroLogo, { rotationY: '+=360', duration: 1.4, ease: 'expo.inOut' })
+      .to(heroLogo, { scale: .92, duration: .35, ease: 'power2.in', yoyo: true, repeat: 1 }, 0.35)
+      .add(shine, 0.6);
+  });
+  function shine() {
+    const s = $('.logo-shine');
+    gsap.fromTo(s, { backgroundPosition: '150% 0' }, { backgroundPosition: '-50% 0', duration: 1.6, ease: 'power2.inOut' });
+  }
+
+  /* ---------- marquee ---------- */
+  const mqTweens = $$('.mq-row').map(row => {
+    const dir = +row.dataset.dir;
+    gsap.set(row, { xPercent: dir > 0 ? -50 : 0 });
+    return RM ? null : gsap.to(row, { xPercent: dir > 0 ? 0 : -50, duration: 38, ease: 'none', repeat: -1 });
+  });
+  if (!RM) {
+    const skew = gsap.quickTo('.mq-row', 'skewX', { duration: .5, ease: 'power3' });
+    const boost = { v: 1 };
+    const applyBoost = () => mqTweens.forEach(t => t && t.timeScale(boost.v));
+    ScrollTrigger.create({
+      trigger: '.marquee', start: 'top bottom', end: 'bottom top',
+      onUpdate(self) {
+        const v = self.getVelocity();
+        skew(gsap.utils.clamp(-14, 14, v / -250));
+        gsap.to(boost, { v: 1 + Math.min(Math.abs(v) / 250, 7), duration: .15, overwrite: true, onUpdate: applyBoost,
+          onComplete: () => gsap.to(boost, { v: 1, duration: 1.2, ease: 'power2.out', onUpdate: applyBoost }) });
+      },
+      onLeave: () => skew(0), onLeaveBack: () => skew(0)
+    });
+  }
+
+  /* ---------- progress + nav ---------- */
+  gsap.to('.progress', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: .3 } });
+  const nav = $('.nav');
+  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: self => nav.classList.toggle('is-hidden', self.direction === 1 && self.scroll() > innerHeight * .6) });
+
+  /* ---------- card tilt + spotlight ---------- */
+  if (FINE && !RM) $$('.card').forEach(card => {
+    const m = $('.card-media', card);
+    const rx = gsap.quickTo(m, 'rotationX', { duration: .6, ease: 'power3' });
+    const ry = gsap.quickTo(m, 'rotationY', { duration: .6, ease: 'power3' });
+    card.addEventListener('pointermove', e => {
+      const r = m.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      m.style.setProperty('--mx', px * 100 + '%'); m.style.setProperty('--my', py * 100 + '%');
+      ry((px - .5) * 12); rx(-(py - .5) * 12);
+    });
+    card.addEventListener('pointerleave', () => { rx(0); ry(0); });
+  });
+
+  /* ---------- filter (Flip) ---------- */
+  let current = 'all';
+  function applyFilter(key) {
+    if (key === current) return;
+    current = key;
+    $$('.filter').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === key)));
+    const cards = $$('.card');
+    const state = Flip.getState(cards);
+    let n = 0;
+    cards.forEach(c => { const show = key === 'all' || c.dataset.cat === key; c.classList.toggle('is-hidden', !show); if (show) n++; });
+    setShopCount(n);
+    if (RM) { ScrollTrigger.refresh(); return; }
+    Flip.from(state, {
+      duration: .8, ease: 'expo.inOut', absolute: true, scale: true, stagger: .02,
+      onEnter: els => gsap.fromTo(els, { opacity: 0, scale: .7, rotation: -4 }, { opacity: 1, scale: 1, rotation: 0, duration: .7, ease: 'expo.out', stagger: .04, delay: .2 }),
+      onLeave: els => gsap.to(els, { opacity: 0, scale: .7, duration: .4, ease: 'power3.in' }),
+      onComplete: () => ScrollTrigger.refresh()
+    });
+  }
+  $('#filters').addEventListener('click', e => { const b = e.target.closest('.filter'); if (b) applyFilter(b.dataset.filter); });
+
+  /* ---------- modal ---------- */
+  initModal(lenis);
+
+  /* ---------- scroll animations (after fonts) ---------- */
+  // background-clip:text breaks on transformed children → move chrome onto each split piece
+  function chromeFix(root, pieces) {
+    const holders = [root, ...$$('.chrome', root)].filter(n => n.classList.contains('chrome') && !pieces.includes(n));
+    pieces.forEach(p => { if (holders.some(h => h.contains(p))) p.classList.add('chrome'); });
+    holders.forEach(h => h.classList.remove('chrome'));
+  }
+
+  function initScroll() {
+    // split headings
+    $$('[data-split]').forEach(el => {
+      const split = SplitText.create(el, { type: 'chars', mask: 'chars', charsClass: 'char' });
+      chromeFix(el, split.chars);
+      if (RM) return;
+      gsap.from(split.chars, {
+        yPercent: 115, rotation: 8, duration: 1.2, ease: 'expo.out', stagger: .045,
+        scrollTrigger: { trigger: el, start: 'top 85%' }
+      });
+    });
+
+    // manifesto word scrub
+    const mf = $('[data-words]');
+    const ws = SplitText.create(mf, { type: 'words' });
+    chromeFix(mf, ws.words);
+    if (!RM) gsap.fromTo(ws.words, { opacity: .1, filter: 'blur(6px)' }, {
+      opacity: 1, filter: 'blur(0px)', stagger: .12, ease: 'none',
+      scrollTrigger: { trigger: mf, start: 'top 80%', end: 'bottom 45%', scrub: true }
+    });
+    if (!RM) gsap.from('.manifesto .star', { rotation: -360, scale: 0, ease: 'none', scrollTrigger: { trigger: '.manifesto', start: 'top 90%', end: 'top 30%', scrub: true } });
+
+    if (RM) return;
+
+    // hero scroll-out
+    gsap.to('.hero-logo-wrap', { yPercent: -18, scale: .82, opacity: 0, filter: 'blur(10px)', ease: 'none',
+      scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+    gsap.to(['.hero-meta', '.hero-side'], { opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '30% top', scrub: true } });
+
+    // grid batch reveal
+    gsap.set('.card', { opacity: 0, y: 80 });
+    ScrollTrigger.batch('.card', {
+      start: 'top 92%',
+      onEnter: b => gsap.to(b, { opacity: 1, y: 0, duration: 1.1, ease: 'expo.out', stagger: .07, overwrite: true }),
+    });
+
+    // filters
+    gsap.from('.filter', { y: 30, opacity: 0, duration: .9, ease: 'expo.out', stagger: .06, scrollTrigger: { trigger: '#filters', start: 'top 90%' } });
+
+    // footer
+    const mega = $('.mega');
+    gsap.from(mega, { yPercent: 35, opacity: 0, duration: 1.6, ease: 'expo.out', scrollTrigger: { trigger: mega, start: 'top 98%' } });
+    $('.footer').addEventListener('pointermove', e => {
+      const r = mega.getBoundingClientRect();
+      gsap.to(mega, { '--x': ((e.clientX - r.left) / r.width * 100) + '%', '--y': ((e.clientY - r.top) / r.height * 100) + '%', duration: .6, ease: 'power3' });
+    });
+
+  }
+
+  /* ---------- intro ---------- */
+  const minTime = new Promise(r => setTimeout(r, RM ? 0 : 1900));
+  const pageLoad = new Promise(r => document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true }));
+  const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+
+  const pre = $('.preloader');
+  const counter = { v: 0 };
+  if (!RM) {
+    gsap.to('.pl-logo', { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.8, ease: 'expo.inOut' });
+    gsap.to('.pl-bar', { scaleX: .85, duration: 1.8, ease: 'expo.inOut' });
+    gsap.to(counter, { v: 99, duration: 1.8, ease: 'expo.inOut', onUpdate: () => $('.pl-count').textContent = pad(Math.round(counter.v), 3) });
+  }
+
+  Promise.all([minTime, pageLoad, fonts, Promise.race([alphaReady, new Promise(r => setTimeout(r, 2500))])]).then(() => {
+    scrollTo(0, 0);
+    initScroll();
+    stars.start();
+    if (RM) { pre.remove(); lenis?.start(); route(); return; }
+
+    $('.pl-count').textContent = '100';
+    gsap.set('.hm, .hero-side', { opacity: 0, y: 20 });
+    gsap.timeline({ defaults: { ease: 'expo.inOut' } })
+      .to('.pl-bar', { scaleX: 1, duration: .4, ease: 'power2.out' })
+      .to(['.pl-count', '.pl-tag'], { yPercent: 120, opacity: 0, duration: .6, ease: 'power3.in' }, '<')
+      .to(pre, { clipPath: 'inset(0% 0% 100% 0%)', duration: 1.2 })
+      .from('#stars', { opacity: 0, duration: 1.6, ease: 'power2.out' }, '-=.6')
+      .to(glow, { opacity: 1, duration: 1.6, ease: 'power2.out' }, '<')
+      .add(shine, '<')
+      .to('.hm, .hero-side', { opacity: 1, y: 0, stagger: .08, duration: 1, ease: 'expo.out' }, '<.2')
+      .add(() => {
+        pre.remove();
+        lenis?.start();
+        ScrollTrigger.refresh();
+        route();
+        gsap.to({}, { duration: 6, repeat: -1, onRepeat: shine }); // periodic chrome glint
+      });
+  });
+
+  /* ==========================================================================
+     MODAL (hash router: #item/<id>)
+     ========================================================================== */
+  function initModal(lenisRef) {
+    const dlg = $('#modal');
+    const hasG = typeof gsap !== 'undefined';
+    let idx = -1, openedFromPage = false, closing = false;
+
+    const fill = (p) => {
+      $('#m-media').innerHTML = art(p);
+      $('#m-brand').textContent = p.brand;
+      $('#m-name').innerHTML = esc(p.name) + (p.sold ? '<span class="m-sold mono">Sold</span>' : '');
+      $('#m-price').textContent = money(p.price);
+      $('#m-size').textContent = p.size;
+      $('#m-cond').textContent = p.cond || '—';
+      $('#m-cat').textContent = p.cat;
+    };
+
+    const open = (id) => {
+      const i = PRODUCTS.findIndex(p => p.id === id);
+      if (i < 0) return;
+      const wasOpen = dlg.open;
+      idx = i; fill(PRODUCTS[i]);
+      if (wasOpen) return;
+      dlg.showModal();
+      document.documentElement.classList.add('modal-open');
+      lenisRef?.stop();
+      if (hasG && !RM) {
+        gsap.timeline()
+          .fromTo('.modal-inner', { clipPath: 'inset(50% 0 50% 0)' }, { clipPath: 'inset(0% 0 0% 0)', duration: .9, ease: 'expo.inOut' })
+          .fromTo('#m-media > *', { scale: 1.3 }, { scale: 1, duration: 1.4, ease: 'expo.out' }, .3)
+          .fromTo('.m-info > *', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: .9, ease: 'expo.out', stagger: .06 }, .4);
+      }
+    };
+
+    const close = () => {
+      if (!dlg.open || closing) return;
+      closing = true;
+      const done = () => {
+        dlg.close(); closing = false;
+        document.documentElement.classList.remove('modal-open');
+        lenisRef?.start();
+        if (location.hash.startsWith('#item/')) {
+          if (openedFromPage) history.back();
+          else history.replaceState(null, '', location.pathname + location.search);
+        }
+        openedFromPage = false;
+      };
+      if (hasG && !RM) gsap.to('.modal-inner', { clipPath: 'inset(50% 0 50% 0)', duration: .55, ease: 'expo.in', onComplete: done });
+      else done();
+    };
+
+    const step = (d) => {
+      idx = (idx + d + PRODUCTS.length) % PRODUCTS.length;
+      const p = PRODUCTS[idx];
+      history.replaceState(null, '', '#item/' + p.id);
+      if (hasG && !RM) {
+        gsap.timeline()
+          .to(['#m-media', '.m-info > *:not(.m-nav)'], { opacity: 0, x: -30 * d, duration: .25, ease: 'power2.in', stagger: .02 })
+          .add(() => fill(p))
+          .fromTo(['#m-media', '.m-info > *:not(.m-nav)'], { opacity: 0, x: 30 * d }, { opacity: 1, x: 0, duration: .6, ease: 'expo.out', stagger: .03 });
+      } else fill(p);
+    };
+
+    route = () => {
+      const m = location.hash.match(/^#item\/(.+)$/);
+      if (m) open(decodeURIComponent(m[1]));
+      else if (dlg.open) close();
+    };
+    addEventListener('hashchange', () => { if (location.hash.startsWith('#item/') && !dlg.open) openedFromPage = true; route(); });
+
+    $('.m-close').addEventListener('click', close);
+    $('#m-prev').addEventListener('click', () => step(-1));
+    $('#m-next').addEventListener('click', () => step(1));
+    dlg.addEventListener('cancel', e => { e.preventDefault(); close(); });
+    dlg.addEventListener('click', e => { if (e.target === dlg) close(); });
+    dlg.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight') step(1);
+      if (e.key === 'ArrowLeft') step(-1);
+    });
+    if (!hasG) route();
+  }
+})();
+</script>
+</body>
+</html>
