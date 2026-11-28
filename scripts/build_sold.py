@@ -21,7 +21,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageChops, ImageOps
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "assets" / "products" / "sold-out"
@@ -89,6 +89,19 @@ def split_collage(im: Image.Image) -> list[Image.Image]:
     return [im.crop((0, 0, im.width, half)), im.crop((0, half, im.width, im.height))]
 
 
+def trim(im: Image.Image, margin: float = 0.04) -> Image.Image:
+    """Cut away empty background around the piece so it fills more of the card."""
+    bg = border_color(im)
+    diff = ImageChops.difference(im, Image.new("RGB", im.size, bg)).convert("L")
+    box = diff.point(lambda p: 255 if p > 28 else 0).getbbox()
+    if not box:
+        return im
+    pad = round(max(im.size) * margin)
+    l, t, r, b = box
+    box = (max(0, l - pad), max(0, t - pad), min(im.width, r + pad), min(im.height, b + pad))
+    return im.crop(box)
+
+
 def pad_to_card(im: Image.Image) -> Image.Image:
     """Pad (never crop) to the 4:5 card shape using the photo's own background colour."""
     w, h = im.size
@@ -146,11 +159,12 @@ def main() -> int:
                 with Image.open(io.BytesIO(raw)) as src:
                     src = ImageOps.exif_transpose(src).convert("RGB")
                     for part, im in enumerate(split_collage(src), start=1):
-                        im = pad_to_card(im)
-                        widths = [w for w in WIDTHS if w <= im.width] or [im.width]
+                        im = pad_to_card(trim(im))
+                        # every standard width smaller than the photo, plus the photo's own width (max 1400)
+                        widths = sorted({w for w in WIDTHS if w < im.width} | {min(im.width, WIDTHS[-1])})
                         srcset = []
                         for w in widths:
-                            out = OUT / f"{slug}-{i}{'abcd'[part - 1]}-{digest}-{w}.webp"
+                            out = OUT / f"{slug}-{i}{'abcd'[part - 1]}-{digest}-t-{w}.webp"   # "t" = trimmed framing
                             keep.add(out.name)
                             if not out.exists():
                                 out.write_bytes(encode(im, w))
