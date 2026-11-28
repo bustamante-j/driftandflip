@@ -98,7 +98,7 @@ def main() -> int:
     crop = im.convert("L").crop((bx0, by0, bx1, by1))
     m = Image.fromarray((mask[int(y0):int(np.ceil(y1)), int(x0):int(np.ceil(x1))] * 255).astype(np.uint8)).resize(crop.size)
     detail = Image.composite(ImageOps.autocontrast(crop, cutoff=1), Image.new("L", crop.size, 0), m)
-    detail.thumbnail((512, 512), Image.LANCZOS)
+    detail.thumbnail((1024, 1024), Image.LANCZOS)
     tex = OUT / f"cross-{digest}.webp"
     for old in OUT.glob("*.webp"):
         if old != tex:

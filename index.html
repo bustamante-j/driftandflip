@@ -147,7 +147,7 @@ html.has-cursor.modal-open :is(input,textarea){cursor:text!important}
 .hero-logo-wrap{--ring:min(calc(var(--logo) * .84), 84dvh)}
 .hero-logo-wrap{--cross:calc(var(--ring) * 1.22)}
 #cross3d{position:absolute;left:50%;top:50%;width:var(--cross);height:var(--cross);margin:calc(var(--cross) / -2) 0 0 calc(var(--cross) / -2);pointer-events:none;opacity:0;transition:opacity 1.6s var(--ease-out)}
-#cross3d.is-on{opacity:.62}
+#cross3d.is-on{opacity:.72}
 .hero-ring{position:absolute;left:50%;top:50%;width:var(--ring);height:var(--ring);margin:calc(var(--ring) / -2) 0 0 calc(var(--ring) / -2);pointer-events:none;overflow:visible;will-change:transform}
 .hero-ring text{font-family:var(--f-mono);font-size:21px;font-weight:700;letter-spacing:4px;fill:rgba(236,232,223,.62)}
 .ring-line{fill:none;stroke:rgba(255,255,255,.09);stroke-width:1}
@@ -1337,6 +1337,7 @@ const SAMPLE_PRODUCTS = [
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, PHONE ? 1.25 : 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.35;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(28, 1, .1, 50);
@@ -1378,11 +1379,14 @@ const SAMPLE_PRODUCTS = [
     if (data && data.detail) {
       // engraving from the uploaded image pressed into the front face (UVs = outline coords)
       new THREE.TextureLoader().load(data.detail, tex => {
-        tex.colorSpace = THREE.NoColorSpace;
+        tex.colorSpace = THREE.SRGBColorSpace;
         tex.repeat.set(1 / (2 * data.aspect), .5);
         tex.offset.set(.5, .5);
         tex.anisotropy = 4;
-        front.bumpMap = tex; front.bumpScale = 2.5;
+        // the image tints the chrome (keeps its grooves + shading) and adds relief
+        front.map = tex; front.color.set(0xffffff);
+        front.bumpMap = tex; front.bumpScale = 1.2;
+        front.roughness = .2;
         front.needsUpdate = true;
       });
     }
