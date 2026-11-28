@@ -25,6 +25,9 @@ Brand - Product name [Size].jpg
 - The size `[L]` is optional.
 - To add more photos of one piece, use the same name and add `(2)`, `(3)` and so on.
   The first photo is the cover. The second shows when someone hovers the card.
+- A tall photo with the **front stacked above the back** is split in two automatically:
+  the front becomes the cover and the back shows on hover.
+- Photos are padded, never cropped, to fit the card shape.
 - JPG, PNG and WebP work. iPhone **HEIC** photos don't: export or share them as JPG first.
 - Photos are shrunk and converted to WebP for the site, and their hidden location data is
   removed. The originals here stay as they are.

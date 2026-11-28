@@ -1,6 +1,6 @@
 import {defineField, defineType} from 'sanity'
 
-const BRANDS = ['Chrome Hearts', 'Stüssy', 'Other']
+const BRANDS = ['Chrome Hearts', 'Stüssy', 'Hellstar', 'BAPE', 'Other']
 const CONDITIONS = [
   {title: 'DS — brand new', value: 'DS'},
   {title: '10/10', value: '10/10'},

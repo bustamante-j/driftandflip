@@ -33,7 +33,11 @@ WIDTHS = [600, 1400]
 BRAND_ALIASES = {
     "chrome hearts": "Chrome Hearts", "chromehearts": "Chrome Hearts", "ch": "Chrome Hearts",
     "stussy": "Stüssy", "stüssy": "Stüssy",
+    "hellstar": "Hellstar",
+    "bape": "BAPE", "a bathing ape": "BAPE",
 }
+CARD_RATIO = 4 / 5          # site cards are 4:5 (w:h)
+COLLAGE_MIN = 1.6           # taller than this (h/w) = front+back stacked → split in two
 
 NAME_RE = re.compile(r"^(?P<base>.*?)\s*(?:\[(?P<size>[^\]]+)\])?\s*(?:\((?P<n>\d+)\)|_(?P<u>\d+))?\s*$")
 
@@ -64,6 +68,36 @@ def parse(stem: str) -> tuple[str, str, str, int]:
 def slugify(s: str) -> str:
     s = s.lower().replace("ü", "u")
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-") or "item"
+
+
+def border_color(im: Image.Image) -> tuple[int, int, int]:
+    """Median colour of a thin frame around the photo — used to pad without visible seams."""
+    w, h = im.size
+    px = []
+    for x in range(0, w, max(1, w // 64)):
+        px += [im.getpixel((x, 2)), im.getpixel((x, h - 3))]
+    for y in range(0, h, max(1, h // 64)):
+        px += [im.getpixel((2, y)), im.getpixel((w - 3, y))]
+    return tuple(sorted(c[i] for c in px)[len(px) // 2] for i in range(3))
+
+
+def split_collage(im: Image.Image) -> list[Image.Image]:
+    """A tall front-over-back collage becomes two photos: front (cover) and back (hover)."""
+    if im.height / im.width < COLLAGE_MIN:
+        return [im]
+    half = im.height // 2
+    return [im.crop((0, 0, im.width, half)), im.crop((0, half, im.width, im.height))]
+
+
+def pad_to_card(im: Image.Image) -> Image.Image:
+    """Pad (never crop) to the 4:5 card shape using the photo's own background colour."""
+    w, h = im.size
+    if abs(w / h - CARD_RATIO) < 0.02:
+        return im
+    nw, nh = (w, round(w / CARD_RATIO)) if w / h > CARD_RATIO else (round(h * CARD_RATIO), h)
+    canvas = Image.new("RGB", (nw, nh), border_color(im))
+    canvas.paste(im, ((nw - w) // 2, (nh - h) // 2))
+    return canvas
 
 
 def encode(img: Image.Image, width: int, quality: int = 78) -> bytes:
@@ -104,30 +138,32 @@ def main() -> int:
     for g in groups.values():
         slug = slugify(f"{g['brand']} {g['name']} {g['size']}")
         imgs = []
+        rel = lambda p: p.relative_to(ROOT).as_posix()
         for i, (_, f) in enumerate(sorted(g["files"], key=lambda t: (t[0], t[1].name)), start=1):
             raw = f.read_bytes()
             digest = hashlib.sha1(raw).hexdigest()[:8]
             try:
-                with Image.open(io.BytesIO(raw)) as im:
-                    im = ImageOps.exif_transpose(im).convert("RGB")
-                    widths = [w for w in WIDTHS if w <= im.width] or [im.width]
-                    srcset = []
-                    for w in widths:
-                        out = OUT / f"{slug}-{i}-{digest}-{w}.webp"
-                        keep.add(out.name)
-                        if not out.exists():
-                            out.write_bytes(encode(im, w))
-                        srcset.append((w, out))
-                    tiny = encode(im, 16, quality=40)
+                with Image.open(io.BytesIO(raw)) as src:
+                    src = ImageOps.exif_transpose(src).convert("RGB")
+                    for part, im in enumerate(split_collage(src), start=1):
+                        im = pad_to_card(im)
+                        widths = [w for w in WIDTHS if w <= im.width] or [im.width]
+                        srcset = []
+                        for w in widths:
+                            out = OUT / f"{slug}-{i}{'abcd'[part - 1]}-{digest}-{w}.webp"
+                            keep.add(out.name)
+                            if not out.exists():
+                                out.write_bytes(encode(im, w))
+                            srcset.append((w, out))
+                        tiny = encode(im, 16, quality=40)
+                        imgs.append({
+                            "url": rel(srcset[-1][1]),
+                            "srcset": ", ".join(f"{rel(p)} {w}w" for w, p in srcset),
+                            "lqip": "data:image/webp;base64," + base64.b64encode(tiny).decode(),
+                        })
             except Exception as e:  # unreadable / corrupt file
                 skipped.append(f"{g['cat']}/{f.name} ({e.__class__.__name__})")
                 continue
-            rel = lambda p: p.relative_to(ROOT).as_posix()
-            imgs.append({
-                "url": rel(srcset[-1][1]),
-                "srcset": ", ".join(f"{rel(p)} {w}w" for w, p in srcset),
-                "lqip": "data:image/webp;base64," + base64.b64encode(tiny).decode(),
-            })
         if not imgs:
             continue
         items.append({
