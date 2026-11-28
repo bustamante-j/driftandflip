@@ -143,6 +143,14 @@ html.has-cursor.modal-open :is(input,textarea){cursor:text!important}
 /* glint: a band slides across, clipped to the logo shape */
 .logo-shine{position:absolute;inset:0;pointer-events:none;overflow:hidden;
   -webkit-mask:url(assets/logo/logo.webp) center/contain no-repeat;mask:url(assets/logo/logo.webp) center/contain no-repeat}
+/* 3D cross + text ring sit behind the logo; sized to fit the screen height */
+.hero-logo-wrap{--ring:min(calc(var(--logo) * .84), 84dvh)}
+.hero-logo-wrap{--cross:calc(var(--ring) * 1.22)}
+#cross3d{position:absolute;left:50%;top:50%;width:var(--cross);height:var(--cross);margin:calc(var(--cross) / -2) 0 0 calc(var(--cross) / -2);pointer-events:none;opacity:0;transition:opacity 1.6s var(--ease-out)}
+#cross3d.is-on{opacity:.62}
+.hero-ring{position:absolute;left:50%;top:50%;width:var(--ring);height:var(--ring);margin:calc(var(--ring) / -2) 0 0 calc(var(--ring) / -2);pointer-events:none;overflow:visible;will-change:transform}
+.hero-ring text{font-family:var(--f-mono);font-size:21px;font-weight:700;letter-spacing:4px;fill:rgba(236,232,223,.62)}
+.ring-line{fill:none;stroke:rgba(255,255,255,.09);stroke-width:1}
 .logo-shine i{position:absolute;top:0;bottom:0;left:-50%;width:50%;background:linear-gradient(105deg,transparent 20%,rgba(255,255,255,.9) 50%,transparent 80%);transform:translateX(-10%)}
 
 .hero-meta{position:absolute;left:0;right:0;bottom:0;padding:0 var(--gutter) var(--gutter);display:grid;grid-template-columns:1fr auto 1fr;align-items:end;z-index:3;color:var(--muted)}
@@ -567,6 +575,15 @@ dialog .toasts{top:calc(20px + env(safe-area-inset-top));bottom:auto}
     <canvas id="stars" aria-hidden="true"></canvas>
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-logo-wrap">
+      <!-- 3D chrome cross (WebGL, loaded after the page is ready) -->
+      <canvas id="cross3d" aria-hidden="true"></canvas>
+      <!-- rotating text ring -->
+      <svg class="hero-ring" viewBox="0 0 1000 1000" aria-hidden="true">
+        <defs><path id="ring-path" d="M500,500 m-420,0 a420,420 0 1,1 840,0 a420,420 0 1,1 -840,0"/></defs>
+        <circle class="ring-line" cx="500" cy="500" r="458"/>
+        <circle class="ring-line" cx="500" cy="500" r="384"/>
+        <text><textPath href="#ring-path" textLength="2620" lengthAdjust="spacing">DRIFT &amp; FLIP ✦ MODERN CLOTHING ✦ EST. 2025 ✦ DRIFT &amp; FLIP ✦ MODERN CLOTHING ✦ EST. 2025 ✦</textPath></text>
+      </svg>
       <h1 class="sr-only">Drift &amp; Flip — Modern Clothing</h1>
       <div class="hero-logo" role="img" aria-label="Drift and Flip logo">
         <img class="logo-glow" src="assets/logo/logo-glow.webp" alt="" aria-hidden="true" width="320" height="320">
@@ -1255,10 +1272,160 @@ const SAMPLE_PRODUCTS = [
     gsap.timeline({ onComplete: () => { flipping = false; } })
       .to(heroLogo, { rotationY: '+=360', duration: 1.4, ease: 'expo.inOut' })
       .to(heroLogo, { scale: .92, duration: .35, ease: 'power2.in', yoyo: true, repeat: 1 }, 0.35)
-      .add(shine, 0.6);
+      .add(shine, 0.6)
+      .add(() => crossFx.kick(12), 0);
   });
   function shine() {   // band slides across the logo (transform only)
     gsap.fromTo('.logo-shine i', { xPercent: -10 }, { xPercent: 310, duration: 1.5, ease: 'power2.inOut' });
+  }
+
+  const crossFx = { kick() {} };   // replaced once the 3D cross is running
+
+  /* ---------- text ring around the logo: slow spin, faster while scrolling ---------- */
+  const ring = $('.hero-ring');
+  if (ring && !RM) {
+    const ringTween = gsap.to(ring, { rotation: 360, duration: 70, ease: 'none', repeat: -1 });
+    const fast = { v: 1 };
+    const applyFast = () => ringTween.timeScale(fast.v);
+    ScrollTrigger.create({
+      trigger: '.hero', start: 'top top', end: 'bottom top',
+      onToggle: self => self.isActive ? ringTween.play() : ringTween.pause(),
+      onUpdate(self) {
+        const v = Math.abs(self.getVelocity());
+        crossFx.kick(Math.min(3, v / 900));
+        gsap.to(fast, { v: 1 + Math.min(v / 120, 14), duration: .2, overwrite: true, onUpdate: applyFast,
+          onComplete: () => gsap.to(fast, { v: 1, duration: 1.4, ease: 'power2.out', onUpdate: applyFast }) });
+      },
+    });
+  }
+
+  /* ---------- 3D chrome cross (lazy WebGL; skipped on low-end / data-saver / reduced motion) ---------- */
+  function initCross3D() {
+    const canvas = $('#cross3d');
+    const nav = navigator, conn = nav.connection || {};
+    const lowEnd = (nav.deviceMemory && nav.deviceMemory < 4) || (nav.hardwareConcurrency && nav.hardwareConcurrency < 4) || conn.saveData;
+    if (!canvas || RM || lowEnd || !window.WebGL2RenderingContext) return;
+    const idle = window.requestIdleCallback || (cb => setTimeout(cb, 300));
+    idle(async () => {
+      try {
+        const [THREE, data] = await Promise.all([
+          import('https://cdn.jsdelivr.net/npm/three@0.187.0/+esm'),
+          fetch('data/cross.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+        ]);
+        buildCross3D(THREE, canvas, data && data.shape ? data : null);
+      } catch (e) { console.warn('[Drift&Flip] 3D cross skipped:', e); }
+    }, { timeout: 2000 });
+  }
+
+  // built-in gothic cross (used until an image is uploaded to assets/cross/)
+  function defaultCrossShape(THREE) {
+    const s = new THREE.Shape(), b = .085, q = (cx, cy, x, y) => s.quadraticCurveTo(cx, cy, x, y);
+    s.moveTo(b, b);
+    s.lineTo(b, .52); q(b + .02, .6, .19, .64); q(.08, .68, .05, .78); q(.02, .88, 0, .98);
+    q(-.02, .88, -.05, .78); q(-.08, .68, -.19, .64); q(-b - .02, .6, -b, .52); s.lineTo(-b, b);
+    s.lineTo(-.5, b); q(-.58, b + .02, -.62, .19); q(-.66, .08, -.76, .05); q(-.86, .02, -.96, 0);
+    q(-.86, -.02, -.76, -.05); q(-.66, -.08, -.62, -.19); q(-.58, -b - .02, -.5, -b); s.lineTo(-b, -b);
+    s.lineTo(-b, -.95); q(-b - .02, -1.03, -.19, -1.07); q(-.08, -1.11, -.05, -1.21); q(-.02, -1.31, 0, -1.42);
+    q(.02, -1.31, .05, -1.21); q(.08, -1.11, .19, -1.07); q(b + .02, -1.03, b, -.95); s.lineTo(b, -b);
+    s.lineTo(.5, -b); q(.58, -b - .02, .62, -.19); q(.66, -.08, .76, -.05); q(.86, -.02, .96, 0);
+    q(.86, .02, .76, .05); q(.66, .08, .62, .19); q(.58, b + .02, .5, b); s.lineTo(b, b);
+    return s;
+  }
+
+  function buildCross3D(THREE, canvas, data) {
+    const PHONE = !FINE;
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, PHONE ? 1.25 : 1.5));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(28, 1, .1, 50);
+    camera.position.set(0, 0, 4.7);
+
+    // studio lighting painted on a small canvas → chrome reflections without downloading an HDR
+    const env = document.createElement('canvas');
+    env.width = 512; env.height = 256;
+    const g = env.getContext('2d');
+    g.fillStyle = '#040404'; g.fillRect(0, 0, 512, 256);
+    const box = (x, y, w, h, a) => {
+      const gr = g.createLinearGradient(x, 0, x + w, 0);
+      gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(x, y, w, h);
+    };
+    box(30, 40, 80, 150, 1); box(290, 24, 120, 120, .95); box(190, 150, 170, 34, .55); box(440, 60, 56, 130, .8);
+    const hz = g.createLinearGradient(0, 108, 0, 162);
+    hz.addColorStop(0, 'rgba(255,255,255,0)'); hz.addColorStop(.5, 'rgba(210,210,210,.35)'); hz.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = hz; g.fillRect(0, 108, 512, 54);
+    const envTex = new THREE.CanvasTexture(env);
+    envTex.mapping = THREE.EquirectangularReflectionMapping;
+    envTex.colorSpace = THREE.SRGBColorSpace;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromEquirectangular(envTex).texture;
+    envTex.dispose(); pmrem.dispose();
+
+    // shape: traced from the uploaded image, or the built-in gothic cross
+    let shape;
+    if (data) {
+      shape = new THREE.Shape();
+      data.shape.forEach(([x, y], i) => (i ? shape.lineTo(x, y) : shape.moveTo(x, y)));
+    } else shape = defaultCrossShape(THREE);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: .13, bevelEnabled: true, bevelThickness: .05, bevelSize: .028, bevelSegments: 4, curveSegments: 10 });
+    geo.computeBoundingBox();
+    const bb = geo.boundingBox, h = bb.max.y - bb.min.y;
+    geo.center();
+    const front = new THREE.MeshStandardMaterial({ color: 0xdcdcdc, metalness: 1, roughness: .15 });
+    const sides = new THREE.MeshStandardMaterial({ color: 0xcfcfcf, metalness: 1, roughness: .22 });
+    if (data && data.detail) {
+      // engraving from the uploaded image pressed into the front face (UVs = outline coords)
+      new THREE.TextureLoader().load(data.detail, tex => {
+        tex.colorSpace = THREE.NoColorSpace;
+        tex.repeat.set(1 / (2 * data.aspect), .5);
+        tex.offset.set(.5, .5);
+        tex.anisotropy = 4;
+        front.bumpMap = tex; front.bumpScale = 2.5;
+        front.needsUpdate = true;
+      });
+    }
+    const mesh = new THREE.Mesh(geo, [front, sides]);
+    mesh.scale.setScalar(2 / h);
+    const pivot = new THREE.Group();
+    pivot.add(mesh);
+    scene.add(pivot);
+
+    const resize = () => {
+      const r = canvas.getBoundingClientRect();
+      if (!r.width) return;
+      renderer.setSize(r.width, r.height, false);
+      camera.aspect = r.width / r.height;
+      camera.updateProjectionMatrix();
+    };
+    resize();
+    addEventListener('resize', resize);
+
+    let visible = true, raf = 0, last = 0, spin = 0, boost = 0, tx = 0, ty = 0, rx = 0, ry = 0;
+    const FRAME = PHONE ? 1000 / 30 : 0;
+    addEventListener('pointermove', e => { tx = (e.clientY / innerHeight - .5) * .45; ty = (e.clientX / innerWidth - .5) * .8; }, { passive: true });
+    const tick = (t) => {
+      raf = 0;
+      if (!visible || document.hidden) return;
+      raf = requestAnimationFrame(tick);
+      if (FRAME && t - last < FRAME - 1) return;
+      const dt = Math.min(.05, last ? (t - last) / 1000 : .016);
+      last = t;
+      boost *= Math.pow(.05, dt);
+      spin += dt * (.32 + boost);
+      rx += (tx - rx) * Math.min(1, dt * 2.5);
+      ry += (ty - ry) * Math.min(1, dt * 2.5);
+      pivot.rotation.set(rx + Math.sin(t * .0005) * .07, spin + ry, Math.sin(t * .0003) * .03);
+      renderer.render(scene, camera);
+    };
+    const start = () => { if (!raf && visible && !document.hidden) { last = 0; raf = requestAnimationFrame(tick); } };
+    new IntersectionObserver(([en]) => { visible = en.isIntersecting; start(); }).observe(canvas);
+    document.addEventListener('visibilitychange', start);
+    crossFx.kick = (v = 6) => { boost = Math.max(boost, v); start(); };
+    renderer.render(scene, camera);
+    canvas.classList.add('is-on');
+    start();
   }
 
   /* ---------- marquee ---------- */
@@ -1409,6 +1576,7 @@ const SAMPLE_PRODUCTS = [
   // below-the-fold work (split headings, scroll reveals) runs after the curtain, once fonts + products are in
   let revealed;
   const afterReveal = new Promise(r => { revealed = r; });
+  afterReveal.then(initCross3D);
   Promise.all([afterReveal, fonts, productsReady]).then(() => {
     initScroll();
     ScrollTrigger.refresh();
@@ -1437,7 +1605,8 @@ const SAMPLE_PRODUCTS = [
       .from('#stars', { opacity: 0, duration: 1.6, ease: 'power2.out' }, '-=.6')
       .to(glow, { opacity: 1, duration: 1.6, ease: 'power2.out' }, '<')
       .add(shine, '<')
-      .to('.hm, .hero-side', { opacity: 1, y: 0, stagger: .08, duration: 1, ease: 'expo.out' }, '<.2');
+      .to('.hm, .hero-side', { opacity: 1, y: 0, stagger: .08, duration: 1, ease: 'expo.out' }, '<.2')
+      .from('.hero-ring', { opacity: 0, scale: .82, duration: 1.8, ease: 'expo.out' }, '<');
   });
 
   /* ==========================================================================
