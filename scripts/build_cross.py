@@ -18,10 +18,9 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 from PIL import Image, ImageOps
-from scipy import ndimage
-from skimage import measure, morphology
+# numpy / scipy / scikit-image are imported only when the cross image actually changed
+# (their first import can be very slow on Windows)
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "assets" / "cross"
@@ -32,12 +31,14 @@ WORK = 640          # trace at this size (px, longest side)
 MAX_POINTS = 360
 
 
-def border_color(a: np.ndarray) -> np.ndarray:
+def border_color(a):
+    import numpy as np
     edge = np.concatenate([a[0], a[-1], a[:, 0], a[:, -1]])
     return np.median(edge, axis=0)
 
 
-def find_mask(im: Image.Image) -> np.ndarray:
+def find_mask(im: Image.Image):
+    import numpy as np
     if im.mode in ("RGBA", "LA") or "transparency" in im.info:
         alpha = np.asarray(im.convert("RGBA"))[..., 3]
         if alpha.min() < 250:
@@ -52,17 +53,33 @@ def main() -> int:
     DATA.parent.mkdir(parents=True, exist_ok=True)
     files = sorted((f for f in SRC.iterdir() if f.suffix.lower() in EXTS and not f.name.startswith(".")),
                    key=lambda f: f.stat().st_mtime, reverse=True) if SRC.is_dir() else []
+    poster_path = DATA.parent / "cross-poster.webp"   # flat cross shown instantly, before the 3D loads
     for old in OUT.glob("*.webp"):
         if not files:
             old.unlink()
     if not files:
         DATA.write_text(json.dumps({"shape": None}), encoding="utf-8")
+        poster_path.unlink(missing_ok=True)
         print("Cross: no image in assets/cross/ -> built-in cross")
         return 0
 
     src = files[0]
     raw = src.read_bytes()
     digest = hashlib.sha1(raw).hexdigest()[:8]
+
+    # unchanged since last build → nothing to do
+    try:
+        prev = json.loads(DATA.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        prev = {}
+    if prev.get("hash") == digest and prev.get("detail") and (ROOT / prev["detail"]).exists() and poster_path.exists():
+        print(f"Cross: {src.name} unchanged")
+        return 0
+
+    import numpy as np
+    from scipy import ndimage
+    from skimage import measure, morphology
+
     im = ImageOps.exif_transpose(Image.open(io.BytesIO(raw)))
     scale = WORK / max(im.size)
     small = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))), Image.LANCZOS)
@@ -105,8 +122,17 @@ def main() -> int:
             old.unlink()
     detail.save(tex, "WEBP", quality=80, method=5)
 
+    # poster: the cross itself with a transparent background, cropped to the outline
+    poster = im.convert("RGBA").crop((bx0, by0, bx1, by1))
+    has_alpha = np.asarray(im.convert("RGBA"))[..., 3].min() < 250
+    if not has_alpha:
+        poster.putalpha(m)
+    poster.thumbnail((1000, 1000), Image.LANCZOS)
+    poster.save(poster_path, "WEBP", quality=82, method=5)
+
     DATA.write_text(json.dumps({
         "source": src.name,
+        "hash": digest,
         "aspect": round((x1 - x0) / h, 4),
         "shape": pts,
         "detail": tex.relative_to(ROOT).as_posix(),
@@ -116,4 +142,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    code = main()
+    sys.stdout.flush()
+    # numpy/scipy can hang while Python shuts down on Windows — exit straight away
+    import os
+    os._exit(code)
