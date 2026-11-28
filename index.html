@@ -856,7 +856,8 @@ const SAMPLE_PRODUCTS = [
   const photo = (p, i = 0, sizes = '(min-width:1200px) 25vw, (min-width:768px) 33vw, 50vw', cls = '') => {
     const im = p.imgs && p.imgs[i];
     if (!im) return '';
-    const srcset = im.local ? '' : ` srcset="${[400, 700, 1000, 1400].map(w => `${imgUrl(im, w)} ${w}w`).join(', ')}" sizes="${sizes}"`;
+    const srcset = im.srcset ? ` srcset="${esc(im.srcset)}" sizes="${sizes}"`          // pre-built (sold-out folder)
+      : im.local ? '' : ` srcset="${[400, 700, 1000, 1400].map(w => `${imgUrl(im, w)} ${w}w`).join(', ')}" sizes="${sizes}"`;
     const bg = im.lqip ? ` style="background:url(${im.lqip}) center/cover"` : '';
     return `<img${cls ? ` class="${cls}"` : ''} src="${imgUrl(im, 800)}"${srcset} alt="${esc(p.brand + ' ' + p.name)}" loading="lazy" decoding="async" width="800" height="1000"${bg}>`;
   };
@@ -890,9 +891,27 @@ const SAMPLE_PRODUCTS = [
     return { ...p, status, sold: status === 'sold', created: created || 0, m: p.m || null,
       imgs: p.imgs || (p.img ? [{ url: p.img, local: true }] : []) };
   };
+  // sold pieces from assets/products/sold-out/ (built by scripts/build_sold.py → data/sold-out.json)
+  async function loadSoldFolder() {
+    try {
+      const res = await fetch('data/sold-out.json', { cache: 'no-cache' });
+      if (!res.ok) return [];
+      const { items } = await res.json();
+      return (items || []).map(p => normalize({ ...p, status: 'sold', price: null, folder: true,
+        imgs: (p.imgs || []).map(im => ({ ...im, local: true })) }));
+    } catch (e) { return []; }
+  }
   async function loadProducts() {
+    const [main, folder] = await Promise.all([loadMain(), loadSoldFolder()]);
+    if (main === null) return null;
+    // once real sold photos exist, the example sold items step aside
+    const base = folder.length ? main.filter(p => !(p.sample && p.status === 'sold')) : main;
+    const ids = new Set(base.map(p => p.id));
+    return base.concat(folder.filter(p => !ids.has(p.id)));
+  }
+  async function loadMain() {
     const s = CONFIG.sanity || {};
-    if (!s.projectId) return SAMPLE_PRODUCTS.map(normalize);
+    if (!s.projectId) return SAMPLE_PRODUCTS.map(p => normalize({ ...p, sample: true }));
     const q = `*[_type == "product" && !(_id in path("drafts.**")) && defined(name) && defined(category)]
       | order(_createdAt desc) {
         "id": _id, name, "brand": select(brand == "Other" => otherBrand, brand), "cat": category,
@@ -1011,7 +1030,7 @@ const SAMPLE_PRODUCTS = [
     const html = (hidden) => sold.map(p => `
       <a class="arc-card" href="#item/${esc(p.id)}" data-cursor="view"${hidden ? ' tabindex="-1" aria-hidden="true"' : ''}>
         <div class="arc-media">${art(p, '240px')}<div class="sold-mark"><span class="chrome">Sold</span></div></div>
-        <span class="arc-brand mono">${esc(p.brand)}</span>
+        <span class="arc-brand mono">${esc(p.brand || 'Archive')}</span>
         <span class="arc-name">${esc(p.name)}</span>
       </a>`).join('');
     const loop = sold.length >= 4 && !RM;
@@ -1959,8 +1978,8 @@ const SAMPLE_PRODUCTS = [
         + (isNew(p) ? '<span class="m-sold m-new mono">New</span>' : '');
       renderMeasure(p);
       setZoom(false);
-      $('#m-price').textContent = money(p.price);
-      $('#m-size').textContent = p.size;
+      $('#m-price').textContent = p.price != null ? money(p.price) : 'Sold out';
+      $('#m-size').textContent = p.size || '—';
       $('#m-cond').textContent = p.cond || '—';
       $('#m-cat').textContent = p.cat;
       renderAdd(p);
@@ -2033,7 +2052,7 @@ const SAMPLE_PRODUCTS = [
       if (!p) return;
       const url = `${location.origin}${location.pathname}#item/${encodeURIComponent(p.id)}`;
       if (navigator.share && matchMedia('(pointer: coarse)').matches) {
-        try { await navigator.share({ title: `${p.brand} ${p.name} — Drift&Flip`, text: `${p.brand} ${p.name} · ${money(p.price)}`, url }); return; }
+        try { await navigator.share({ title: `${p.brand} ${p.name} — Drift&Flip`, text: `${[p.brand, p.name].filter(Boolean).join(' ')} · ${p.price != null ? money(p.price) : 'Sold out'}`, url }); return; }
         catch (e) { if (e.name === 'AbortError') return; }
       }
       try { await navigator.clipboard.writeText(url); toast('Link copied'); }
